@@ -1,0 +1,156 @@
+---- variables ----
+kVars = {} -- Table for all the variables
+kVars.WindowName = "Click To Grow GUI"
+kVars.lp = game:GetService("Players").LocalPlayer
+kVars.VirtualUser = game:GetService('VirtualUser')
+
+---- if re-injecting script, we wait for the old one to close and turn all option off
+if game:GetService("CoreGui"):FindFirstChild(kVars.WindowName) then
+    wait(.15)
+end
+
+---- antiAFK ----
+kVars.AntiAfk = game:service('Players').LocalPlayer.Idled:connect(function()
+    kVars.VirtualUser:CaptureController()
+    kVars.VirtualUser:ClickButton2(Vector2.new())
+end)
+
+---- GUI Library ----
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+---- Window Setup ----
+local Window = Rayfield:CreateWindow({
+    Name = kVars.WindowName,
+    Theme = "Default",
+    LoadingTitle = "Loading GUI...",
+    LoadingSubtitle = "Please wait",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "RayfieldConfigs",
+        FileName = "ClickToGrowSimulator"
+    }
+})
+
+---- Tabs ----
+local pageFarm = Window:CreateTab("Farm", "rewind")
+local pageTeleport = Window:CreateTab("Teleport", "map")
+local pageCharacter = Window:CreateTab("Player", "user")
+local pageMisc = Window:CreateTab("Misc", "settings")
+local pageCredits = Window:CreateTab("Credits", "info")
+
+---------- Farm Page ----------
+kVars.togglePoints = pageFarm:CreateToggle({
+    Name = "Growth",
+    CurrentValue = false,
+    Callback = function(bool)
+        kVars.boolPoints = bool
+        if bool then fPoints() end
+    end
+})
+
+function fPoints()
+    spawn(function()
+        while kVars.boolPoints do
+            task.wait()
+            workspace.Events.AddPoints:FireServer()
+        end
+    end)
+end
+
+kVars.togglePrestige = pageFarm:CreateToggle({
+    Name = "Prestige",
+    CurrentValue = false,
+    Callback = function(bool)
+        kVars.boolPrestige = bool
+        if bool then fPrestige() end
+    end
+})
+
+function fPrestige()
+    spawn(function()
+        while kVars.boolPrestige do
+            task.wait()
+            pcall(function()
+                if kVars.lp.PlayerGui.ScreenGui.Prestige.Text == "Click to Prestige" then
+                    workspace.Events.Prestige:FireServer()
+                end
+            end)
+        end
+    end)
+end
+---------- Teleports ----------
+kVars.Zones = {
+    {name = "Spawn", cf = CFrame.new(-923.9505615234375, 429.15802001953125, 9.49638557434082)},
+}
+
+for _, zone in ipairs(kVars.Zones) do
+    pageTeleport:CreateButton({
+        Name = zone.name,
+        Callback = function()
+            kVars.lp.Character.HumanoidRootPart.CFrame = zone.cf
+        end
+    })
+end
+---------- Character Page ----------
+pageCharacter:CreateSlider({
+    Name = "Walk Speed",
+    Range = {16, 255},
+    Increment = 1,
+    CurrentValue = kVars.lp.Character.Humanoid.WalkSpeed,
+    Callback = function(num)
+        kVars.lp.Character.Humanoid.WalkSpeed = num
+    end
+})
+
+pageCharacter:CreateSlider({
+    Name = "Jump Power",
+    Range = {16, 255},
+    Increment = 1,
+    CurrentValue = kVars.lp.Character.Humanoid.JumpPower,
+    Callback = function(num)
+        kVars.lp.Character.Humanoid.JumpPower = num
+    end
+})
+
+pageCharacter:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
+    Callback = function(bool)
+        kVars.boolInfJump = bool
+    end
+})
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if kVars.boolInfJump and kVars.lp.Character:FindFirstChild("Humanoid") then
+        kVars.lp.Character.Humanoid:ChangeState("Jumping")
+    end
+end)
+
+---------- Misc Page ----------
+kVars.toggleAntiAFK = pageMisc:CreateToggle({
+    Name = "Anti AFK",
+    Callback = function()
+        kVars.connectAntiAfk = kVars.lp.Idled:connect(function()
+            if kVars.vu and kVars.vu.CaptureController and kVars.vu.ClickButton2 then
+                kVars.vu:CaptureController()
+                kVars.vu:ClickButton2(Vector2.new())
+            else
+                warn("kVars.vu or its methods are nil!")
+            end
+        end)
+    end
+})
+
+
+---------- Credits Page ----------
+pageCredits:CreateLabel("Coded by: andinglyy")
+pageCredits:CreateLabel("https://github.com/ItzAndingly")
+pageCredits:CreateLabel("Gui by: Sirius Menu")
+pageCredits:CreateLabel("https://docs.sirius.menu/rayfield")
+
+---------- Closing ----------
+Rayfield:Notify({
+    Title = "Script Loaded",
+    Content = "Click To Grow GUI loaded successfully!",
+    Duration = 5
+})
